@@ -1,0 +1,3 @@
+import a.swift
+
+let a = A()
