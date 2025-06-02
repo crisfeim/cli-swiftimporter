@@ -1,1 +1,1 @@
-import cyclic_b.swift
+import cyclic_b.swift.txt

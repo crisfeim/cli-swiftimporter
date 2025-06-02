@@ -15,7 +15,8 @@ let package = Package(
         ),
         .testTarget(
             name: "swiftimportTests",
-            dependencies: ["swiftimport"]
+            dependencies: ["swiftimport"],
+            resources: [.copy("files")]
         ),
     ]
 )

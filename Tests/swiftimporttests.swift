@@ -1,5 +1,5 @@
 //
-//  swiftimporttests.swift
+//  swiftimporttests.swift.txt
 //  swiftimport
 //
 //  Created by Cristian Felipe Patiño Rojas on 2/5/25.
@@ -8,41 +8,44 @@
 import XCTest
 
 final class Tests: XCTestCase {
+    
+    lazy var testSources = Bundle.module.testFilesDirectory
+    
     func test_scanImports_parsesStandaloneSwiftFilesImports() {
-        let sut = FileImporter(keyword: "import")
+        let sut = FileImporter(keyword: "import", extension: "swift.txt")
         let code = """
-        import a.swift
-        import b.swift
-        import some_really_long_named_file.swift
-        import cascade_b.swift
+        import a.swift.txt
+        import b.swift.txt
+        import some_really_long_named_file.swift.txt
+        import cascade_b.swift.txt
 
         let a = B()
         """
         
         let output = sut.scanImports(atContent: code)
-        let expectedOutput: Set<String> = ["a.swift", "b.swift", "some_really_long_named_file.swift", "cascade_b.swift"]
+        let expectedOutput: Set<String> = ["a.swift.txt", "b.swift.txt", "some_really_long_named_file.swift.txt", "cascade_b.swift.txt"]
         
         XCTAssertEqual(output, expectedOutput)
     }
     
     
     func test_scanImports_parsesNestedSwiftFilesImports() {
-        let sut = FileImporter(keyword: "import")
+        let sut = FileImporter(keyword: "import", extension: "swift.txt")
         let code = """
-        import nested/a.swift
-        import nested/b.swift
+        import nested/a.swift.txt
+        import nested/b.swift.txt
         
         enum SomeEnum {}
         """
         
         let output = sut.scanImports(atContent: code)
-        let expectedOutput: Set<String> = ["nested/a.swift", "nested/b.swift"]
+        let expectedOutput: Set<String> = ["nested/a.swift.txt", "nested/b.swift.txt"]
         
         XCTAssertEqual(output, expectedOutput)
     }
     
     func test_scanImports_parsesFolders() {
-        let sut = FileImporter(keyword: "import")
+        let sut = FileImporter(keyword: "import", extension: "swift.txt")
         let code = """
         import nested/
         """
@@ -52,6 +55,106 @@ final class Tests: XCTestCase {
         
         XCTAssertEqual(output, expectedOutput)
     }
+    
+    func test_file_parsing() throws(FileImporter.Error) {
+        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let fileURL = testSources.appendingPathComponent("b.swift.txt")
+        let output = try sut.scanImports(ofFile: fileURL)
+            .map { $0.lastPathComponent }
+        let expectedOutput = ["a.swift.txt", "b.swift.txt"]
+        
+        XCTAssertEqual(Set(output), Set(expectedOutput))
+    }
+    
+    func test_cascade_parsing() throws(FileImporter.Error) {
+        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let fileURL = testSources.appendingPathComponent("cascade_a.swift.txt")
+        let output = try sut.scanImports(ofFile: fileURL)
+            .map {$0.lastPathComponent}
+        
+        let expectedOutput = [
+            "cascade_a.swift.txt",
+            "cascade_b.swift.txt",
+            "cascade_c.swift.txt"
+        ]
+        
+        XCTAssertEqual(Set(output), Set(expectedOutput))
+    }
+    
+    func test_infinite_recursion() throws(FileImporter.Error) {
+        
+        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let fileURL = testSources.appendingPathComponent("cyclic_a.swift.txt")
+        let output = try sut.scanImports(ofFile: fileURL).map {$0.lastPathComponent}
+        
+        let expectedOutput = [
+            "cyclic_a.swift.txt",
+            "cyclic_b.swift.txt"
+        ]
+        
+        XCTAssertEqual(Set(output), Set(expectedOutput))
+    }
+    
+    func test_import_file_inside_folder() throws (FileImporter.Error) {
+        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let fileURL = testSources.appendingPathComponent("nested_import.swift.txt")
+        let output = try sut.scanImports(ofFile: fileURL)
+        
+        let expectedOutput = [
+            "nested_import.swift.txt",
+            "nested/a.swift.txt"
+        ].map {
+            testSources.appendingPathComponent($0)
+        }
+        
+        XCTAssertEqual(output,  Set(expectedOutput))
+    }
+    
+    func test_import_file_inside_folder_cascade() throws (FileImporter.Error) {
+        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let fileURL = testSources.appendingPathComponent("nested_import_b.swift.txt")
+        let output = try sut.scanImports(ofFile: fileURL)
+        
+        
+        let expectedOutput = [
+            "nested_import_b.swift.txt",
+            "nested/a.swift.txt",
+            "nested/b.swift.txt"
+        ].map {
+            testSources.appendingPathComponent($0)
+        }
+        
+        XCTAssertEqual(output,  Set(expectedOutput))
+    }
+    
+    func test_import_whole_folder() throws(FileImporter.Error) {
+        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let fileURL = testSources.appendingPathComponent("import_whole_folder.swift.txt")
+        let output = try sut.scanImports(ofFile: fileURL)
+        
+        let expectedOutput = [
+            "import_whole_folder.swift.txt",
+            "nested/a.swift.txt",
+            "nested/b.swift.txt",
+            "nested/nested/a.swift.txt"
+        ].map {
+            testSources.appendingPathComponent($0)
+        }
+        
+        XCTAssertEqual(output,  Set(expectedOutput))
+    }
+    
+}
+
+
+private extension Bundle {
+    var resourcesDirectory: URL {
+        bundleURL.appendingPathComponent("Contents/Resources")
+    }
+    
+    var testFilesDirectory: URL {
+        resourcesDirectory.appendingPathComponent("files")
+    }
 }
 
 import Foundation
@@ -59,7 +162,7 @@ import RegexBuilder
 
 struct FileImporter {
     let keyword: String
-    
+    let `extension`: String
     private let fm = FileManager.default
     
     enum Error: Swift.Error {
@@ -86,7 +189,7 @@ struct FileImporter {
             var swiftFiles: [URL] = []
             
             for case let fileURL as URL in enumerator {
-                if fileURL.pathExtension == "swift" {
+                if fileURL.lastPathComponent.hasSuffix(`extension`) {
                     swiftFiles.append(fileURL)
                 }
             }
@@ -149,7 +252,7 @@ struct FileImporter {
                     }
                 }
                 ChoiceOf {
-                    ".swift"
+                    ".swift.txt"
                     "/"
                 }
             }
@@ -163,120 +266,5 @@ struct FileImporter {
         
         return Set(importedFiles)
     }
-}
-
-// require fileimporter.swift
-import Foundation
-
-final class FileImporterTests {
-    
-    let currentDir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    lazy var testSources = currentDir.appendingPathComponent("tests-sources")
-    
-    func test_file_parsing() throws(FileImporter.Error) {
-        let sut = FileImporter(keyword: "import")
-        let fileURL = testSources.appendingPathComponent("b.swift")
-        let output = try sut.scanImports(ofFile: fileURL)
-            .map { $0.lastPathComponent }
-        let expectedOutput = ["a.swift", "b.swift"]
-        
-        assert(Set(output) == Set(expectedOutput))
-    }
-    
-    func test_cascade_parsing() throws(FileImporter.Error) {
-        let sut = FileImporter(keyword: "import")
-        let fileURL = testSources.appendingPathComponent("cascade_a.swift")
-        let output = try sut.scanImports(ofFile: fileURL)
-            .map {$0.lastPathComponent}
-        
-        let expectedOutput = [
-            "cascade_a.swift",
-            "cascade_b.swift",
-            "cascade_c.swift"
-        ]
-        
-        assert(Set(output) == Set(expectedOutput))
-    }
-    
-    func test_infinite_recursion() throws(FileImporter.Error) {
-        
-        let sut = FileImporter(keyword: "import")
-        let fileURL = testSources.appendingPathComponent("cyclic_a.swift")
-        let output = try sut.scanImports(ofFile: fileURL).map {$0.lastPathComponent}
-        
-        let expectedOutput = [
-            "cyclic_a.swift",
-            "cyclic_b.swift"
-        ]
-        
-        assert(Set(output) == Set(expectedOutput))
-    }
-    
-    func test_import_file_inside_folder() throws (FileImporter.Error) {
-        let sut = FileImporter(keyword: "import")
-        let fileURL = testSources.appendingPathComponent("nested_import.swift")
-        let output = try sut.scanImports(ofFile: fileURL)
-        
-        let expectedOutput = [
-            "nested_import.swift",
-            "nested/a.swift"
-        ].map {
-            testSources.appendingPathComponent($0)
-        }
-        
-        assert(output == Set(expectedOutput))
-    }
-    
-    func test_import_file_inside_folder_cascade() throws (FileImporter.Error) {
-        let sut = FileImporter(keyword: "import")
-        let fileURL = testSources.appendingPathComponent("nested_import_b.swift")
-        let output = try sut.scanImports(ofFile: fileURL)
-        
-        
-        let expectedOutput = [
-            "nested_import_b.swift",
-            "nested/a.swift",
-            "nested/b.swift"
-        ].map {
-            testSources.appendingPathComponent($0)
-        }
-        
-        assert(output == Set(expectedOutput))
-    }
-    
-    func test_import_whole_folder() throws(FileImporter.Error) {
-        let sut = FileImporter(keyword: "import")
-        let fileURL = testSources.appendingPathComponent("import_whole_folder.swift")
-        let output = try sut.scanImports(ofFile: fileURL)
-        
-        let expectedOutput = [
-            "import_whole_folder.swift",
-            "nested/a.swift",
-            "nested/b.swift",
-            "nested/nested/a.swift"
-        ].map {
-            testSources.appendingPathComponent($0)
-        }
-        
-        assert(output == Set(expectedOutput))
-    }
-    
-    func _try(_ function: () throws(FileImporter.Error) -> Void) {
-        do {
-            try function()
-        } catch {
-            print(error)
-        }
-    }
-}
-
-func assert(_ condition: Bool, function: String = #function, line: UInt = #line) {
-    let emoji = condition ? "✅" : "❌"
-    print(line.description ++ emoji.description ++ function)
-}
-
-infix operator ++: AdditionPrecedence
-func ++(lhs: String, rhs: String) -> String {
-    lhs + " " + rhs
 }
 
