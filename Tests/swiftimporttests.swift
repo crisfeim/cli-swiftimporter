@@ -8,10 +8,49 @@
 import XCTest
 
 final class Tests: XCTestCase {
-    func test() {
-        XCTExpectFailure {
-            XCTFail()
-        }
+    func test_scanImports_parsesStandaloneSwiftFilesImports() {
+        let sut = FileImporter(keyword: "import")
+        let code = """
+        import a.swift
+        import b.swift
+        import some_really_long_named_file.swift
+        import cascade_b.swift
+
+        let a = B()
+        """
+        
+        let output = sut.scanImports(atContent: code)
+        let expectedOutput: Set<String> = ["a.swift", "b.swift", "some_really_long_named_file.swift", "cascade_b.swift"]
+        
+        XCTAssertEqual(output, expectedOutput)
+    }
+    
+    
+    func test_scanImports_parsesNestedSwiftFilesImports() {
+        let sut = FileImporter(keyword: "import")
+        let code = """
+        import nested/a.swift
+        import nested/b.swift
+        
+        enum SomeEnum {}
+        """
+        
+        let output = sut.scanImports(atContent: code)
+        let expectedOutput: Set<String> = ["nested/a.swift", "nested/b.swift"]
+        
+        XCTAssertEqual(output, expectedOutput)
+    }
+    
+    func test_scanImports_parsesFolders() {
+        let sut = FileImporter(keyword: "import")
+        let code = """
+        import nested/
+        """
+        
+        let output = sut.scanImports(atContent: code)
+        let expectedOutput: Set<String> = ["nested/"]
+        
+        XCTAssertEqual(output, expectedOutput)
     }
 }
 
@@ -133,62 +172,6 @@ final class FileImporterTests {
     
     let currentDir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     lazy var testSources = currentDir.appendingPathComponent("tests-sources")
-    
-    func run() {
-        test_content_parsing()
-        test_content_parsing_nested()
-        test_content_parsing_folder()
-        _try(test_file_parsing)
-        _try(test_cascade_parsing)
-        _try(test_infinite_recursion)
-        _try(test_import_file_inside_folder)
-        _try(test_import_file_inside_folder_cascade)
-        _try(test_import_whole_folder)
-    }
-    
-    func test_content_parsing() {
-        let sut = FileImporter(keyword: "import")
-        let code = """
-        import a.swift
-        import b.swift
-        import some_really_long_named_file.swift
-        import cascade_b.swift
-
-        let a = B()
-        """
-        
-        let output = sut.scanImports(atContent: code)
-        let expectedOutput = ["a.swift", "b.swift", "some_really_long_named_file.swift", "cascade_b.swift"]
-        
-        assert(output == Set(expectedOutput))
-    }
-    
-    func test_content_parsing_nested() {
-        let sut = FileImporter(keyword: "import")
-        let code = """
-        import nested/a.swift
-        import nested/b.swift
-        
-        enum SomeEnum {}
-        """
-        
-        let output = sut.scanImports(atContent: code)
-        let expectedOutput = ["nested/a.swift", "nested/b.swift"]
-        
-        assert(output == Set(expectedOutput))
-    }
-    
-    func test_content_parsing_folder() {
-        let sut = FileImporter(keyword: "import")
-        let code = """
-        import nested/
-        """
-        
-        let output = sut.scanImports(atContent: code)
-        let expectedOutput = ["nested/"]
-        
-        assert(output == Set(expectedOutput))
-    }
     
     func test_file_parsing() throws(FileImporter.Error) {
         let sut = FileImporter(keyword: "import")
