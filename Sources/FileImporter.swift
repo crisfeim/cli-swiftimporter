@@ -25,30 +25,6 @@ final class FileImporter {
         return importedFiles
     }
     
-    func scanFile(_ fileURL: URL) throws {
-        switch try fileHandler.getFile(fileURL) {
-        case .directory: return try handleDirectory(fileURL)
-        case .file(let data): return try handleFile(data)
-        case .none: throw FileNotFoundError()
-        }
-    }
-    
-    func handleDirectory(_ directoryURL: URL) throws {
-        try fileHandler.getFileURLsOnDirectory(directoryURL)
-            .filter { $0.lastPathComponent.hasSuffix(ext) }
-            .forEach { try scanFile($0) }
-    }
-    
-    func handleFile(_ data: File.Data) throws {
-        guard !importedFiles.contains(data.url) else { return }
-        importedFiles.append(data.url)
-        
-        try parseImports(data.content)
-            .map { data.parentDir.appendingPathComponent($0, isDirectory: $0.hasSuffix("/")) }
-            .forEach { try scanFile($0) }
-    }
-    
-    
     func parseImports(_ content: String) -> OrderedSet<String> {
         let importPattern = Regex {
             Anchor.startOfLine
@@ -71,5 +47,31 @@ final class FileImporter {
         return OrderedSet(content
             .matches(of: importPattern)
             .map { String($0.output.1) })
+    }
+}
+
+private extension FileImporter {
+    
+    func scanFile(_ fileURL: URL) throws {
+        switch try fileHandler.getFile(fileURL) {
+        case .directory: return try handleDirectory(fileURL)
+        case .file(let data): return try handleFile(data)
+        case .none: throw FileNotFoundError()
+        }
+    }
+    
+    func handleDirectory(_ directoryURL: URL) throws {
+        try fileHandler.getFileURLsOnDirectory(directoryURL)
+            .filter { $0.lastPathComponent.hasSuffix(ext) }
+            .forEach { try scanFile($0) }
+    }
+    
+    func handleFile(_ data: File.Data) throws {
+        guard !importedFiles.contains(data.url) else { return }
+        importedFiles.append(data.url)
+        
+        try parseImports(data.content)
+            .map { data.parentDir.appendingPathComponent($0, isDirectory: $0.hasSuffix("/")) }
+            .forEach { try scanFile($0) }
     }
 }
