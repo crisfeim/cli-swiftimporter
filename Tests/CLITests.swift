@@ -18,10 +18,10 @@ class CLITests: XCTestCase {
         let expectedResult = """
         c file
         
-        import nested/c.swift.txt
+        // import nested/c.swift.txt
         b file
         
-        import b.swift.txt
+        // import b.swift.txt
         a file
         
         """

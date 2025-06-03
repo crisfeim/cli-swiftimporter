@@ -12,6 +12,6 @@ struct CLI: ParsableCommand {
     }
     
     func execute() throws -> String {
-        return try FileImporter(keyword: "import", ext: ext).makeExecutable(from: input)
+        return try FileImporter(keyword: "// import", ext: ext).makeExecutable(from: input)
     }
 }

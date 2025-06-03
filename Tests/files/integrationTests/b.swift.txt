@@ -1,2 +1,2 @@
-import nested/c.swift.txt
+// import nested/c.swift.txt
 b file
