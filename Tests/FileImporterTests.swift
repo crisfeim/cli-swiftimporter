@@ -1,9 +1,5 @@
 //
-//  swiftimporttests.swift.txt
-//  swiftimport
-//
 //  Created by Cristian Felipe Patiño Rojas on 2/5/25.
-//
 
 import XCTest
 import Collections
@@ -12,17 +8,15 @@ import Collections
 final class FileImporterTests: XCTestCase {
     
     lazy var testSources = Bundle.module.testFilesDirectory
-
+    
     func test_file_parsing() throws {
-        try XCTExpectFailure {
-            let sut = makeSUT()
-            let fileURL = testSources.appendingPathComponent("b.swift.txt")
-            let output = OrderedSet(try sut.scanImports(fileURL)
-                .map { $0.lastPathComponent })
-            let expectedOutput = ["a.swift.txt", "b.swift.txt"]
-            
-            XCTAssertEqual(output, OrderedSet(expectedOutput))
-        }
+        let sut = makeSUT()
+        let fileURL = testSources.appendingPathComponent("b.swift.txt")
+        let output = OrderedSet(try sut.scanImports(fileURL)
+            .map { $0.lastPathComponent })
+        let expectedOutput = ["a.swift.txt", "b.swift.txt"]
+        
+        XCTAssertEqual(output, OrderedSet(expectedOutput))
     }
     
     func test_cascade_parsing() throws {
@@ -32,9 +26,9 @@ final class FileImporterTests: XCTestCase {
             .map {$0.lastPathComponent}
         
         let expectedOutput = [
-            "cascade_a.swift.txt",
+            "cascade_c.swift.txt",
             "cascade_b.swift.txt",
-            "cascade_c.swift.txt"
+            "cascade_a.swift.txt"
         ]
         
         XCTAssertEqual(OrderedSet(output), OrderedSet(expectedOutput))
@@ -47,8 +41,8 @@ final class FileImporterTests: XCTestCase {
         let output = try sut.scanImports(fileURL).map {$0.lastPathComponent}
         
         let expectedOutput = [
+            "cyclic_b.swift.txt",
             "cyclic_a.swift.txt",
-            "cyclic_b.swift.txt"
         ]
         
         XCTAssertEqual(OrderedSet(output), OrderedSet(expectedOutput))
@@ -60,8 +54,8 @@ final class FileImporterTests: XCTestCase {
         let output = try sut.scanImports(fileURL)
         
         let expectedOutput = [
+            "nested/a.swift.txt",
             "nested_import.swift.txt",
-            "nested/a.swift.txt"
         ].map {
             testSources.appendingPathComponent($0)
         }
@@ -70,22 +64,20 @@ final class FileImporterTests: XCTestCase {
     }
     
     func test_import_file_inside_folder_cascade() throws {
-        try XCTExpectFailure {
-            let sut = makeSUT()
-            let fileURL = testSources.appendingPathComponent("nested_import_b.swift.txt")
-            let output = try sut.scanImports(fileURL)
-            
-            
-            let expectedOutput = [
-                "nested_import_b.swift.txt",
-                "nested/a.swift.txt",
-                "nested/b.swift.txt"
-            ].map {
-                testSources.appendingPathComponent($0)
-            }
-            
-            XCTAssertEqual(output,  OrderedSet(expectedOutput))
+        let sut = makeSUT()
+        let fileURL = testSources.appendingPathComponent("nested_import_b.swift.txt")
+        let output = try sut.scanImports(fileURL)
+        
+        
+        let expectedOutput = [
+            "nested/a.swift.txt",
+            "nested/b.swift.txt",
+            "nested_import_b.swift.txt",
+        ].map {
+            testSources.appendingPathComponent($0)
         }
+        
+        XCTAssertEqual(output,  OrderedSet(expectedOutput))
     }
     
     func test_import_whole_folder() throws {
@@ -94,10 +86,10 @@ final class FileImporterTests: XCTestCase {
         let output = try sut.scanImports(fileURL)
         
         let expectedOutput = [
-            "import_whole_folder.swift.txt",
-            "nested/a.swift.txt",
+            "nested/nested/a.swift.txt",
             "nested/b.swift.txt",
-            "nested/nested/a.swift.txt"
+            "nested/a.swift.txt",
+            "import_whole_folder.swift.txt",
         ].map {
             testSources.appendingPathComponent($0)
         }

@@ -10,7 +10,10 @@ final class FileImporter {
     private let ext: String
     private let fileHandler: FileHandler
     
-    private var importedFiles = OrderedSet<URL>()
+    private var importedFilesByVisitOrder = OrderedSet<URL>()
+    private var orderedFilesForConcatenation: OrderedSet<URL> {
+        OrderedSet(importedFilesByVisitOrder.reversed())
+    }
     
     init(keyword: String, ext: String, fileHandler: FileHandler = FileManager.default) {
         self.keyword = keyword
@@ -21,9 +24,9 @@ final class FileImporter {
     struct FileNotFoundError: Error {}
     
     func scanImports(_ fileURL: URL) throws -> OrderedSet<URL> {
-        importedFiles.removeAll()
+        importedFilesByVisitOrder.removeAll()
         try scanFile(fileURL)
-        return importedFiles
+        return orderedFilesForConcatenation
     }
     
     func parseImports(_ content: String) -> OrderedSet<String> {
@@ -69,7 +72,7 @@ private extension FileImporter {
     
     func handleFile(_ data: File.Data) throws {
         guard fileHasNotBeenAlreadyParsed(data.url) else { return }
-        importedFiles.append(data.url)
+        importedFilesByVisitOrder.append(data.url)
         
         try parseImports(data.content)
             .map { data.parentDir.appendingPathComponent($0, isDirectory: $0.hasSuffix("/")) }
@@ -77,6 +80,6 @@ private extension FileImporter {
     }
     
     func fileHasNotBeenAlreadyParsed(_ url: URL) -> Bool {
-        !importedFiles.contains(url)
+        !importedFilesByVisitOrder.contains(url)
     }
 }
