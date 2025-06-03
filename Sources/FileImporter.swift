@@ -23,7 +23,7 @@ final class FileImporter {
         case unableToScanDirectory(atPath: String)
     }
     
-    func makeExecutableFile(from fileURL: URL) throws -> String {
+    func concatenateImportsFromFile(_ fileURL: URL) throws -> String {
         try scanImports(ofFile: fileURL).reduce("") {
             let string = try String(contentsOfFile: $1.path, encoding: .utf8)
             return $0 + "\n" + string
