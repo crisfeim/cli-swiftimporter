@@ -28,7 +28,7 @@ final class Tests: XCTestCase {
         let a = B()
         """
         
-        let output = sut.scanImports(atContent: code)
+        let output = sut.scanImports(code)
         let expectedOutput = ["a.swift.txt", "b.swift.txt", "some_really_long_named_file.swift.txt", "cascade_b.swift.txt"]
         
         XCTAssertEqual(output, OrderedSet(expectedOutput))
@@ -44,7 +44,7 @@ final class Tests: XCTestCase {
         enum SomeEnum {}
         """
         
-        let output = sut.scanImports(atContent: code)
+        let output = sut.scanImports(code)
         let expectedOutput = ["nested/a.swift.txt", "nested/b.swift.txt"]
         
         XCTAssertEqual(output, OrderedSet(expectedOutput))
@@ -56,7 +56,7 @@ final class Tests: XCTestCase {
         import nested/
         """
         
-        let output = sut.scanImports(atContent: code)
+        let output = sut.scanImports(code)
         let expectedOutput = ["nested/"]
         
         XCTAssertEqual(output, OrderedSet(expectedOutput))

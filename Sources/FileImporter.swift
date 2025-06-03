@@ -63,7 +63,7 @@ final class FileImporter {
         required_files.append(fileURL)
         let directory = fileURL.deletingLastPathComponent()
         
-        let imports = scanImports(atContent: content).map {
+        let imports = scanImports(content).map {
             directory.appendingPathComponent($0, isDirectory: $0.hasSuffix("/"))
         }
         
@@ -95,7 +95,7 @@ final class FileImporter {
         return swiftFiles
     }
     
-    func scanImports(atContent content: String) -> OrderedSet<String> {
+    func scanImports(_ content: String) -> OrderedSet<String> {
         let importPattern = Regex {
             Anchor.startOfLine
             "\(keyword) "
