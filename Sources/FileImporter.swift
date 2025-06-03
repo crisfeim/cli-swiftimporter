@@ -21,6 +21,7 @@ final class FileImporter {
     struct FileNotFoundError: Error {}
     
     func scanImports(_ fileURL: URL) throws -> OrderedSet<URL> {
+        importedFiles.removeAll()
         try scanFile(fileURL)
         return importedFiles
     }
