@@ -68,11 +68,15 @@ private extension FileImporter {
     }
     
     func handleFile(_ data: File.Data) throws {
-        guard !importedFiles.contains(data.url) else { return }
+        guard fileHasNotBeenAlreadyParsed(data.url) else { return }
         importedFiles.append(data.url)
         
         try parseImports(data.content)
             .map { data.parentDir.appendingPathComponent($0, isDirectory: $0.hasSuffix("/")) }
             .forEach { try scanFile($0) }
+    }
+    
+    func fileHasNotBeenAlreadyParsed(_ url: URL) -> Bool {
+        !importedFiles.contains(url)
     }
 }
