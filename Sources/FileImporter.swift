@@ -24,14 +24,14 @@ final class FileImporter {
     }
     
     func concatenateImportsFromFile(_ fileURL: URL) throws -> String {
-        try scanImports(ofFile: fileURL).reduce("") {
+        try scanImports(fileURL).reduce("") {
             let string = try String(contentsOfFile: $1.path, encoding: .utf8)
             return $0 + "\n" + string
         }
     }
     
-    func scanImports(ofFile url: URL) throws -> OrderedSet<URL> {
-        try scan_file(url)
+    func scanImports(_ fileURL: URL) throws -> OrderedSet<URL> {
+        try scan_file(fileURL)
         return required_files
     }
     

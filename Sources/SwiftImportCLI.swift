@@ -14,6 +14,6 @@ struct SwiftImportCLI: ParsableCommand {
     mutating func run() throws {
         let importer = FileImporter(keyword: "import", extension: ext)
         let fileURL = URL(fileURLWithPath: input)
-        print(try importer.scanImports(ofFile: fileURL))
+        print(try importer.scanImports(fileURL))
     }
 }
