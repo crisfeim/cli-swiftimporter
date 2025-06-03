@@ -8,12 +8,14 @@ import ArgumentParser
 import Foundation
 
 @main
-struct SwiftImportCLI: ParsableCommand {
+struct CLI: ParsableCommand {
     @Option(name: .shortAndLong, help: "Input entry point swift file") var input: String
     @Option(name: .shortAndLong, help: "The extension of the file") var ext: String = "swift"
     mutating func run() throws {
-        let importer = FileImporter(keyword: "import", ext: ext)
-        let fileURL = URL(fileURLWithPath: input)
-        print(try importer.scanImports(fileURL))
+       print(try execute())
+    }
+    
+    func execute() throws -> String {
+        return try FileImporter(keyword: "import", ext: ext).makeExecutable(from: input)
     }
 }

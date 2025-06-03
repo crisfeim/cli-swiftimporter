@@ -23,6 +23,12 @@ final class FileImporter {
     
     struct FileNotFoundError: Error {}
     
+    func makeExecutable(from filePath: String) throws -> String {
+        try scanImports( URL(fileURLWithPath: filePath))
+            .map { try String(contentsOf: $0, encoding: .utf8) }
+            .joined(separator: "\n")
+    }
+    
     func scanImports(_ fileURL: URL) throws -> OrderedSet<URL> {
         importedFilesByVisitOrder.removeAll()
         try scanFile(fileURL)
