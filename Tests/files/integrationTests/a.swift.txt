@@ -1,0 +1,2 @@
+import b.swift.txt
+a file
