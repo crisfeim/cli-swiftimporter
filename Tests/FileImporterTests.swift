@@ -12,14 +12,7 @@ import Collections
 final class FileImporterTests: XCTestCase {
     
     lazy var testSources = Bundle.module.testFilesDirectory
-    
-    func makeSUT(keyword: String = "import", extension: String = "swift.txt") -> FileImporter {
-        FileImporter(keyword: keyword, ext: `extension`)
-    }
-}
 
-extension FileImporterTests {
-    
     func test_file_parsing() throws {
         try XCTExpectFailure {
             let sut = makeSUT()
@@ -114,3 +107,9 @@ extension FileImporterTests {
 }
 
 
+// MARK: - Helpers
+extension FileImporterTests {
+    func makeSUT(keyword: String = "import", extension: String = "swift.txt") -> FileImporter {
+        FileImporter(keyword: keyword, ext: `extension`)
+    }
+}
