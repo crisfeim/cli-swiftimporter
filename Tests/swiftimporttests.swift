@@ -12,8 +12,12 @@ final class Tests: XCTestCase {
     
     lazy var testSources = Bundle.module.testFilesDirectory
     
+    func makeSUT(keyword: String = "import", extension: String = "swift.txt") -> FileImporter {
+        FileImporter(keyword: keyword, extension: `extension`)
+    }
+    
     func test_scanImports_parsesStandaloneSwiftFilesImports() {
-        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let sut = makeSUT()
         let code = """
         import a.swift.txt
         import b.swift.txt
@@ -31,7 +35,7 @@ final class Tests: XCTestCase {
     
     
     func test_scanImports_parsesNestedSwiftFilesImports() {
-        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let sut = makeSUT()
         let code = """
         import nested/a.swift.txt
         import nested/b.swift.txt
@@ -46,7 +50,7 @@ final class Tests: XCTestCase {
     }
     
     func test_scanImports_parsesFolders() {
-        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let sut = makeSUT()
         let code = """
         import nested/
         """
@@ -58,7 +62,7 @@ final class Tests: XCTestCase {
     }
     
     func test_file_parsing() throws(FileImporter.Error) {
-        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let sut = makeSUT()
         let fileURL = testSources.appendingPathComponent("b.swift.txt")
         let output = try sut.scanImports(ofFile: fileURL)
             .map { $0.lastPathComponent }
@@ -68,7 +72,7 @@ final class Tests: XCTestCase {
     }
     
     func test_cascade_parsing() throws(FileImporter.Error) {
-        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let sut = makeSUT()
         let fileURL = testSources.appendingPathComponent("cascade_a.swift.txt")
         let output = try sut.scanImports(ofFile: fileURL)
             .map {$0.lastPathComponent}
@@ -84,7 +88,7 @@ final class Tests: XCTestCase {
     
     func test_infinite_recursion() throws(FileImporter.Error) {
         
-        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let sut = makeSUT()
         let fileURL = testSources.appendingPathComponent("cyclic_a.swift.txt")
         let output = try sut.scanImports(ofFile: fileURL).map {$0.lastPathComponent}
         
@@ -97,7 +101,7 @@ final class Tests: XCTestCase {
     }
     
     func test_import_file_inside_folder() throws (FileImporter.Error) {
-        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let sut = makeSUT()
         let fileURL = testSources.appendingPathComponent("nested_import.swift.txt")
         let output = try sut.scanImports(ofFile: fileURL)
         
@@ -112,7 +116,7 @@ final class Tests: XCTestCase {
     }
     
     func test_import_file_inside_folder_cascade() throws (FileImporter.Error) {
-        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let sut = makeSUT()
         let fileURL = testSources.appendingPathComponent("nested_import_b.swift.txt")
         let output = try sut.scanImports(ofFile: fileURL)
         
@@ -129,7 +133,7 @@ final class Tests: XCTestCase {
     }
     
     func test_import_whole_folder() throws(FileImporter.Error) {
-        let sut = FileImporter(keyword: "import", extension: "swift.txt")
+        let sut = makeSUT()
         let fileURL = testSources.appendingPathComponent("import_whole_folder.swift.txt")
         let output = try sut.scanImports(ofFile: fileURL)
         
@@ -146,17 +150,5 @@ final class Tests: XCTestCase {
     }
     
 }
-
-
-private extension Bundle {
-    var resourcesDirectory: URL {
-        bundleURL.appendingPathComponent("Contents/Resources")
-    }
-    
-    var testFilesDirectory: URL {
-        resourcesDirectory.appendingPathComponent("files")
-    }
-}
-
 
 
