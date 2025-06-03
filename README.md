@@ -71,6 +71,12 @@ swift "$tmp_file"
 rm "$tmp_file"
 ```
 
+
+
+https://github.com/user-attachments/assets/39679225-4540-4147-b221-8237fc70ec5c
+
+
+
 #### CodeRunner
 
 If the swiftimport binary is in your $PATH, you can add preprocessing to your Swift compile script in CodeRunner:
@@ -100,6 +106,12 @@ if [ $status -eq 0 ]; then
 fi
 exit $status
 ```
+
+
+
+https://github.com/user-attachments/assets/508ba6d8-7221-4a78-b99d-02ed00921337
+
+
 
 ### Installation
 
