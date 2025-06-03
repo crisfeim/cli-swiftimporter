@@ -37,12 +37,10 @@ final class FileImporter {
     
     func scan_file(_ fileURL: URL) throws {
         
-        guard fm.fileExists(atPath: fileURL.path) else {
+        var isDirectory: ObjCBool = false
+        guard fm.fileExists(atPath: fileURL.path, isDirectory: &isDirectory) else {
             throw Error.fileDoesntExist(atPath: fileURL.path)
         }
-        
-        var isDirectory: ObjCBool = false
-        fm.fileExists(atPath: fileURL.path, isDirectory: &isDirectory)
         
         if isDirectory.boolValue {
             let swiftFiles = try scanDirectory(fileURL)
