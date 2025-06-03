@@ -3,13 +3,14 @@
 
 import Foundation
 import RegexBuilder
+import Collections
 
 final class FileImporter {
     let keyword: String
     let `extension`: String
     private let fm = FileManager.default
     
-    private var required_files = Set<URL>()
+    private var required_files = OrderedSet<URL>()
     
     init(keyword: String, extension: String) {
         self.keyword = keyword
@@ -22,12 +23,19 @@ final class FileImporter {
         case unableToScanDirectory(atPath: String)
     }
     
-    func scanImports(ofFile url: URL) throws(Error) -> Set<URL> {
+    func makeExecutableFile(from fileURL: URL) throws -> String {
+        try scanImports(ofFile: fileURL).reduce("") {
+            let string = try String(contentsOfFile: $1.path, encoding: .utf8)
+            return $0 + "\n" + string
+        }
+    }
+    
+    func scanImports(ofFile url: URL) throws -> OrderedSet<URL> {
         try scan_file(url)
         return required_files
     }
     
-    func scan_file(_ fileURL: URL) throws(Error) {
+    func scan_file(_ fileURL: URL) throws {
         
         guard fm.fileExists(atPath: fileURL.path) else {
             throw Error.fileDoesntExist(atPath: fileURL.path)
@@ -52,7 +60,7 @@ final class FileImporter {
             return
         }
         
-        required_files.insert(fileURL)
+        required_files.append(fileURL)
         let directory = fileURL.deletingLastPathComponent()
         
         let imports = scanImports(atContent: content).map {
@@ -64,7 +72,7 @@ final class FileImporter {
         }
     }
     
-    func scanDirectory(_ directoryURL: URL) throws(Error) -> [URL] {
+    func scanDirectory(_ directoryURL: URL) throws -> [URL] {
         
         let resourceKeys: [URLResourceKey] = [.isDirectoryKey]
         
@@ -87,7 +95,7 @@ final class FileImporter {
         return swiftFiles
     }
     
-    func scanImports(atContent content: String) -> Set<String> {
+    func scanImports(atContent content: String) -> OrderedSet<String> {
         let importPattern = Regex {
             Anchor.startOfLine
             "\(keyword) "
@@ -112,6 +120,6 @@ final class FileImporter {
             String(match.output.1)
         }
         
-        return Set(importedFiles)
+        return OrderedSet(importedFiles)
     }
 }
