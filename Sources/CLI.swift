@@ -1,8 +1,4 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
-// 
-// Swift Argument Parser
-// https://swiftpackageindex.com/apple/swift-argument-parser/documentation
+// © 2025  Cristian Felipe Patiño Rojas. Created on 3/6/25.
 
 import ArgumentParser
 import Foundation
