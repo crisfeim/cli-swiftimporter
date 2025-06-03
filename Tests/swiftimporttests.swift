@@ -17,7 +17,7 @@ final class Tests: XCTestCase {
         FileImporter(keyword: keyword, ext: `extension`)
     }
     
-    func test_scanImports_parsesStandaloneSwiftFilesImports() {
+    func test_parseImports_handlesStandaloneSwiftFilesImports() {
         let sut = makeSUT()
         let code = """
         import a.swift.txt
@@ -35,7 +35,7 @@ final class Tests: XCTestCase {
     }
     
     
-    func test_scanImports_parsesNestedSwiftFilesImports() {
+    func test_parseImports_handlesNestedSwiftFilesImports() {
         let sut = makeSUT()
         let code = """
         import nested/a.swift.txt
@@ -50,7 +50,7 @@ final class Tests: XCTestCase {
         XCTAssertEqual(output, OrderedSet(expectedOutput))
     }
     
-    func test_scanImports_parsesFolders() {
+    func test_parseImports_handlesDirectories() {
         let sut = makeSUT()
         let code = """
         import nested/
